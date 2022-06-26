@@ -1,0 +1,2992 @@
+Imports System.Threading
+
+Module Module1
+
+    Sub Main()
+        Dim Cube(5, 2, 2), Original(5, 2, 2) As String
+        Dim ListOfMoves As New List(Of String)
+        Dim MaxMoves As Integer
+
+        StartMenu()
+
+        Cube = SettingColoursLoop(Cube)
+
+        MaxMoves = 0
+
+        For face = 0 To 5
+            For x = 0 To 2
+                For y = 0 To 2
+                    Original(face, x, y) = Cube(face, x, y)
+                Next
+            Next
+        Next
+
+        ListOfMoves = Solve(Cube, ListOfMoves, MaxMoves)
+        MaxMoves = ListOfMoves.Count - 1
+
+        StartOfSolution(Cube, MaxMoves + 1)
+
+        ListOfMoves.ToArray()
+
+        Clear()
+
+        listPrint(Original, ListOfMoves, MaxMoves)
+
+    End Sub
+
+    Sub StartMenu()
+        Dim key As String
+        Dim state As Integer = 0
+        Dim drawing, Cursor(5, 2, 2) As Boolean
+        drawing = True
+
+        colour("W", False)
+
+        MenuDraw(state)
+
+        BufferAndScreen()
+
+        While drawing = True
+
+            colour("W", False)
+
+            key = keyCheck()
+
+            If key = "" Then
+
+                wait()
+
+            ElseIf key = "p" And state = 0 Then
+
+                drawing = False
+
+                Clear()
+
+                state = 3
+                MenuDraw(state)
+
+                For i = 0 To 15
+                    wait()
+                Next
+                Clear()
+
+                state = 0
+                MenuDraw(state)
+
+                For i = 0 To 5
+                    wait()
+                Next
+                Clear()
+
+            ElseIf key = "p" And state = 1 Then
+
+                Clear()
+
+                state = 2
+                MenuDraw(state)
+
+                For i = 0 To 15
+                    wait()
+                Next
+                Clear()
+
+                state = 1
+                MenuDraw(state)
+
+                For i = 0 To 5
+                    wait()
+                Next
+                Clear()
+                ProgramInstructions()
+                colour("W", False)
+                MenuDraw(state)
+
+            ElseIf key = "s" Then
+
+                Clear()
+
+                state += 1
+                If state > 1 Then state = 1
+
+                MenuDraw(state)
+
+                wait()
+
+            ElseIf key = "w" Then
+
+                Clear()
+
+                state -= 1
+                If state < 0 Then state = 0
+
+                MenuDraw(state)
+
+                wait()
+
+            Else
+
+                Clear()
+
+                MenuDraw(state)
+
+                wait()
+
+            End If
+
+        End While
+    End Sub
+
+    Sub MenuDraw(state)
+        If state = 0 Then
+            Console.WriteLine("Rubik's Cube Solver NEA")
+            Console.WriteLine("By Ben Rees")
+            Console.WriteLine("")
+            colour("G", False)
+            Console.WriteLine("[     START    ]")
+            colour("W", False)
+            Console.WriteLine("| INSTRUCTIONS |")
+            Console.WriteLine("")
+            Console.WriteLine("Press W-up, S-down, P-enter")
+        ElseIf state = 1 Then
+            Console.WriteLine("Rubik's Cube Solver NEA")
+            Console.WriteLine("By Ben Rees")
+            Console.WriteLine("")
+            Console.WriteLine("|     START    |")
+            colour("G", False)
+            Console.WriteLine("[ INSTRUCTIONS ]")
+            colour("W", False)
+            Console.WriteLine("")
+            Console.WriteLine("Press W-up, S-down, P-enter")
+        ElseIf state = 2 Then
+            Console.WriteLine("Rubik's Cube Solver NEA")
+            Console.WriteLine("By Ben Rees")
+            Console.WriteLine("")
+            Console.WriteLine("|     START    |")
+            colour("Y", False)
+            Console.WriteLine(" [INSTRUCTIONS] ")
+            colour("W", False)
+            Console.WriteLine("")
+            Console.WriteLine("Press W-up, S-down, P-enter")
+        ElseIf state = 3 Then
+            Console.WriteLine("Rubik's Cube Solver NEA")
+            Console.WriteLine("By Ben Rees")
+            Console.WriteLine("")
+            colour("Y", False)
+            Console.WriteLine(" [    START   ] ")
+            colour("W", False)
+            Console.WriteLine("| INSTRUCTIONS |")
+            Console.WriteLine("")
+            Console.WriteLine("Press W-up, S-down, P-enter")
+        End If
+    End Sub
+
+    Sub ProgramInstructions()
+        Console.WriteLine("INSTRUCTIONS:")
+        Console.WriteLine("")
+
+        Console.WriteLine("Inputting colours:")
+        Console.WriteLine("Use W-Up, A-Left, D-Right, S-Down to move the cursor")
+        Console.WriteLine("Use the numbers 1-6 for the colours")
+        Console.WriteLine("Button B will scrample and button P will solve when you are done")
+        Console.WriteLine("")
+
+        Console.WriteLine("The meaning of the moves (facing white face with green up top):")
+        Console.WriteLine("U - turn top row to the left")
+        Console.WriteLine("D - turn bottom row to the right")
+        Console.WriteLine("L - turn left column down")
+        Console.WriteLine("R - turn right column up")
+        Console.WriteLine("F - turn front/white face clockwise 90 degrees clockwise")
+        Console.WriteLine("B - turn back/yellow face clockwise 90 degrees anti-clockwise")
+        Console.WriteLine("UN - turn top row to the right")
+        Console.WriteLine("DN - turn bottom row to the left")
+        Console.WriteLine("LN - turn left column up")
+        Console.WriteLine("RN - turn right column down")
+        Console.WriteLine("FN - turn front/white face clockwise 90 degrees anti-clockwise")
+        Console.WriteLine("BN - turn back/yellow face clockwise 90 degrees clockwise")
+        Console.WriteLine("")
+
+        Console.WriteLine("Cycling through the steps:")
+        Console.WriteLine("Button 'm' moves to the next step")
+        Console.WriteLine("Button 'n' moves to the previous step")
+        Console.WriteLine("")
+
+        Console.WriteLine("Press enter to close instructions.")
+
+        Console.ForegroundColor = ConsoleColor.Black
+        Console.ReadLine()
+        Clear()
+    End Sub
+
+    Sub StartOfSolution(Cube(,,) As String, MaxMoves As Integer)
+
+        Dim noCursor(5, 2, 2) As Boolean
+        noCursor = drawNoCursor()
+
+        Console.ForegroundColor = ConsoleColor.White
+
+        Console.Write("Solution made. Press enter to start:")
+        Console.WriteLine(" (Max moves = " & MaxMoves - 1 & ")")
+        Console.WriteLine("M is next move, N is previous move")
+
+
+        draw(Cube, noCursor)
+
+        Console.ForegroundColor = ConsoleColor.Black
+
+        Console.ReadLine()
+
+    End Sub
+
+    Sub listPrint(Cube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        Dim Original(5, 2, 2), LastMove As String
+        Dim key As String = ""
+        Dim drawing, Cursor(5, 2, 2) As Boolean
+        Dim MoveNum As Integer = 0
+        drawing = True
+
+        For face = 0 To 5
+            For x = 0 To 2
+                For y = 0 To 2
+                    Original(face, x, y) = Cube(face, x, y)
+                Next
+            Next
+        Next
+
+        Dim nocursor(5, 2, 2) As Boolean
+        nocursor = drawNoCursor()
+
+        LastMove = "forward"
+
+        Cursor = drawNoCursor()
+
+        Clear()
+
+        Console.ForegroundColor = ConsoleColor.White
+
+        Console.WriteLine("Current move: " & ListOfMoves(MoveNum))
+
+        Console.WriteLine("Move Number: " & MoveNum & "/" & MaxMoves)
+
+        draw(Cube, Cursor)
+
+        While drawing = True
+
+            key = keyCheck()
+
+            If key = "" Then
+
+                wait()
+
+            ElseIf key = "m" Then
+
+                MoveNum += 1
+
+                If MoveNum > MaxMoves Then
+
+                    MoveNum -= 1
+
+                    Clear()
+
+                    Console.ForegroundColor = ConsoleColor.White
+
+                    Console.WriteLine("Current move: " & ListOfMoves(MoveNum))
+
+                    Console.WriteLine("Move Number: " & MoveNum & "/" & MaxMoves)
+
+                    draw(Cube, Cursor)
+
+                    If MoveNum = MaxMoves Then
+                        Console.ForegroundColor = ConsoleColor.White
+
+                        Console.WriteLine("Press P to finish, press B to restart.")
+                    End If
+
+                Else
+
+                    Clear()
+
+                    Console.ForegroundColor = ConsoleColor.White
+
+                    Console.WriteLine("Current move: " & ListOfMoves(MoveNum))
+
+                    Console.WriteLine("Move Number: " & MoveNum & "/" & MaxMoves)
+
+                    Cube = ListLetterToAction(MoveNum, Cube, ListOfMoves)
+
+                    draw(Cube, Cursor)
+
+                    If MoveNum = MaxMoves Then
+                        Console.ForegroundColor = ConsoleColor.White
+
+                        Console.WriteLine("Press P to finish, press B to restart.")
+                    End If
+
+                End If
+
+                LastMove = "forwards"
+
+            ElseIf key = "n" Then
+
+                If MoveNum = 0 Then
+
+                    Clear()
+
+                    Console.ForegroundColor = ConsoleColor.White
+
+                    Console.WriteLine("Current move: START")
+
+                    Console.WriteLine("Move Number: " & MoveNum & "/" & MaxMoves)
+
+                    draw(Cube, Cursor)
+
+                Else
+
+                    Cube = ReverseToAction(MoveNum, Cube, ListOfMoves)
+
+                    MoveNum -= 1
+
+                    Clear()
+
+                    Console.ForegroundColor = ConsoleColor.White
+
+                    Console.WriteLine("Current move: " & ListOfMoves(MoveNum))
+
+                    Console.WriteLine("Move Number: " & MoveNum & "/" & MaxMoves)
+
+                    draw(Cube, Cursor)
+
+                End If
+
+                LastMove = "backwards"
+
+            ElseIf key = "p" And MoveNum = MaxMoves Then
+
+                drawing = False
+
+            ElseIf key = "b" And MoveNum = MaxMoves Then
+
+                drawing = False
+
+            ElseIf MoveNum = MaxMoves Then
+
+                Clear()
+
+                Console.ForegroundColor = ConsoleColor.White
+
+                Console.WriteLine("Current move: " & ListOfMoves(MoveNum))
+
+                Console.WriteLine("Move Number: " & MoveNum & "/" & MaxMoves)
+
+                draw(Cube, Cursor)
+
+                Console.ForegroundColor = ConsoleColor.White
+
+                Console.WriteLine("Press P to finish, press B to restart.")
+
+            Else
+
+                Clear()
+
+                Console.ForegroundColor = ConsoleColor.White
+
+                Console.WriteLine("Current move: " & ListOfMoves(MoveNum))
+
+                Console.WriteLine("Move Number: " & MoveNum & "/" & MaxMoves)
+
+                draw(Cube, Cursor)
+
+            End If
+        End While
+
+        If key = "b" Then
+            Clear()
+            Main()
+        End If
+
+    End Sub
+
+    Function ListLetterToAction(MoveNum, Cube(,,), ListofMoves)
+
+        If ListofMoves(MoveNum) = "F" Then
+            F(Cube)
+        ElseIf ListofMoves(MoveNum) = "B" Then
+            B(Cube)
+        ElseIf ListofMoves(MoveNum) = "U" Then
+            U(Cube)
+        ElseIf ListofMoves(MoveNum) = "D" Then
+            D(Cube)
+        ElseIf ListofMoves(MoveNum) = "L" Then
+            L(Cube)
+        ElseIf ListofMoves(MoveNum) = "R" Then
+            R(Cube)
+        ElseIf ListofMoves(MoveNum) = "FN" Then
+            FN(Cube)
+        ElseIf ListofMoves(MoveNum) = "BN" Then
+            BN(Cube)
+        ElseIf ListofMoves(MoveNum) = "UN" Then
+            UN(Cube)
+        ElseIf ListofMoves(MoveNum) = "DN" Then
+            DN(Cube)
+        ElseIf ListofMoves(MoveNum) = "LN" Then
+            LN(Cube)
+        ElseIf ListofMoves(MoveNum) = "RN" Then
+            RN(Cube)
+        End If
+
+        Return Cube
+    End Function
+
+    Function ReverseToAction(MoveNum, Cube(,,), ListOfMoves)
+
+        If ListOfMoves(MoveNum) = "F" Then
+            FN(Cube)
+        ElseIf ListOfMoves(MoveNum) = "B" Then
+            BN(Cube)
+        ElseIf ListOfMoves(MoveNum) = "U" Then
+            UN(Cube)
+        ElseIf ListOfMoves(MoveNum) = "D" Then
+            DN(Cube)
+        ElseIf ListOfMoves(MoveNum) = "L" Then
+            LN(Cube)
+        ElseIf ListOfMoves(MoveNum) = "R" Then
+            RN(Cube)
+        ElseIf ListOfMoves(MoveNum) = "FN" Then
+            F(Cube)
+        ElseIf ListOfMoves(MoveNum) = "BN" Then
+            B(Cube)
+        ElseIf ListOfMoves(MoveNum) = "UN" Then
+            U(Cube)
+        ElseIf ListOfMoves(MoveNum) = "DN" Then
+            D(Cube)
+        ElseIf ListOfMoves(MoveNum) = "LN" Then
+            L(Cube)
+        ElseIf ListOfMoves(MoveNum) = "RN" Then
+            R(Cube)
+        End If
+
+        Return Cube
+    End Function
+
+    Function Solve(ByVal Cube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+        Dim SolvingCube(5, 2, 2) As String
+        Dim FrontFace, BackFace, LeftFace, RightFace, UpFace, DownFace As Integer
+        Dim looping, Cursor(5, 2, 2) As Boolean
+        Cursor(5, 2, 2) = False
+        looping = True
+        SolvingCube = Cube
+
+        FrontFace = 2
+        BackFace = 4
+        LeftFace = 1
+        RightFace = 3
+        UpFace = 0
+        DownFace = 5
+
+        Dim temp(5, 2, 2) As Boolean
+
+        Dim noCursor(5, 2, 2) As Boolean
+        noCursor = drawNoCursor()
+
+        ListOfMoves.Add("START")
+
+        SolvingCube = DaisyCross(SolvingCube, ListOfMoves, MaxMoves)
+
+        SolvingCube = Daisy2WhiteCross(SolvingCube, ListOfMoves, MaxMoves)
+
+        SolvingCube = WhiteCorners(SolvingCube, ListOfMoves, MaxMoves)
+
+        SolvingCube = CentreLayers(SolvingCube, ListOfMoves, MaxMoves)
+
+        SolvingCube = YellowCross(SolvingCube, ListOfMoves, MaxMoves)
+
+        SolvingCube = SwapYellowEdges(SolvingCube, ListOfMoves, MaxMoves)
+
+        SolvingCube = CycleCorners(SolvingCube, ListOfMoves, MaxMoves)
+
+        SolvingCube = OrientCorners(SolvingCube, ListOfMoves, MaxMoves)
+
+        Clear()
+
+        Return ListOfMoves 'So the user can go forward and backwards
+    End Function
+
+    Function SettingColoursLoop(Cube(,,) As String)
+        Dim key As String
+        Dim drawing, Cursor(5, 2, 2) As Boolean
+        drawing = True
+
+        BufferAndScreen()
+
+        Cube = intialiseCube()
+        Cursor = intialiseCursor()
+        ButtonInstructions()
+        draw(Cube, Cursor)
+
+        While drawing = True
+
+            key = keyCheck()
+
+            If key = "" Then
+
+                wait()
+
+            ElseIf key = "b" Then
+
+                TheRandomiser(Cube)
+
+                Clear()
+
+                ButtonInstructions()
+
+                draw(Cube, Cursor)
+
+                wait()
+
+            ElseIf key = "p" Then
+
+                drawing = NumSquaresCheck(Cube)
+
+                If drawing = True Then
+                    Clear()
+
+                    ButtonInstructions()
+
+                    draw(Cube, Cursor)
+
+                    Console.ForegroundColor = ConsoleColor.White
+                    Console.WriteLine("You don't have nine of each colour.")
+
+                    wait()
+                End If
+
+            Else
+
+                Cursor = CursorPosition(key, Cursor)
+
+                Cube = ColourChange(key, Cube, Cursor)
+
+                Clear()
+
+                ButtonInstructions()
+
+                draw(Cube, Cursor)
+
+                wait()
+
+            End If
+
+        End While
+
+        Return Cube
+    End Function
+
+    Function TheRandomiser(cube(,,))
+
+        Randomize()
+
+        Dim RandomNumber As Integer
+
+        RandomNumber = Rnd(1)
+
+        If RandomNumber = 0 Then
+            D(cube)
+            U(cube)
+            L(cube)
+            R(cube)
+            UN(cube)
+            BN(cube)
+            D(cube)
+            U(cube)
+            RN(cube)
+            R(cube)
+            D(cube)
+            BN(cube)
+            D(cube)
+            UN(cube)
+            L(cube)
+            R(cube)
+            DN(cube)
+            BN(cube)
+        ElseIf RandomNumber = 1 Then
+            R(cube)
+            B(cube)
+            L(cube)
+            B(cube)
+            UN(cube)
+            BN(cube)
+            D(cube)
+            U(cube)
+            L(cube)
+            R(cube)
+            UN(cube)
+            BN(cube)
+            D(cube)
+            U(cube)
+            L(cube)
+            R(cube)
+            UN(cube)
+            BN(cube)
+        End If
+
+
+        Return cube
+    End Function
+
+    Function DaisyCross(SolvingCube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+        'sending all white edges to yellow face:
+
+        Do Until SolvingCube(4, 0, 1) = "W" And SolvingCube(4, 1, 0) = "W" And SolvingCube(4, 2, 1) = "W" And SolvingCube(4, 1, 2) = "W"
+
+            'check if a white edge is on the white face - while also making sure there is no white already in the place it wants to go
+            If SolvingCube(2, 0, 1) = "W" Then
+                Do Until SolvingCube(4, 2, 1) <> "W"
+                    SolvingCube = B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                SolvingCube = L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+                SolvingCube = L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+
+            ElseIf SolvingCube(2, 1, 0) = "W" Then
+                Do Until SolvingCube(4, 1, 0) <> "W"
+                    SolvingCube = B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                SolvingCube = U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                SolvingCube = U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+
+            ElseIf SolvingCube(2, 1, 2) = "W" Then
+                Do Until SolvingCube(4, 1, 2) <> "W"
+                    SolvingCube = B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                SolvingCube = D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                SolvingCube = D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+
+            ElseIf SolvingCube(2, 2, 1) = "W" Then
+                Do Until SolvingCube(4, 0, 1) <> "W"
+                    SolvingCube = B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                SolvingCube = R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                SolvingCube = R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+
+
+                'All white edges on the white face(2) have been moved to the yellow face.
+                'So not E0,1,2,3 but could be E4 to E11 - use word doc in downloads
+
+                'E0 green
+            ElseIf SolvingCube(0, 1, 2) = "W" Then
+                Do Until SolvingCube(4, 1, 0) <> "W"
+                    B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                UN(SolvingCube)
+                AddUpNot(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                RN(SolvingCube)
+                AddRightNot(ListOfMoves, MaxMoves)
+
+                'Console.WriteLine(".")
+
+                'E3 red
+            ElseIf SolvingCube(1, 2, 1) = "W" Then
+                Do Until SolvingCube(4, 2, 1) <> "W"
+                    B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                LN(SolvingCube)
+                AddLeftNot(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                UN(SolvingCube)
+                AddUpNot(ListOfMoves, MaxMoves)
+                'Console.WriteLine(".")
+
+                'E1 magenta
+            ElseIf SolvingCube(3, 0, 1) = "W" Then
+                Do Until SolvingCube(4, 0, 1) <> "W"
+                    B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                RN(SolvingCube)
+                AddRightNot(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                'Console.WriteLine(".")
+
+                'E2 blue
+            ElseIf SolvingCube(5, 1, 0) = "W" Then
+                Do Until SolvingCube(4, 1, 2) <> "W"
+                    B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                LN(SolvingCube)
+                AddLeftNot(ListOfMoves, MaxMoves)
+                'Console.WriteLine("")
+
+                '   'E4 green
+            ElseIf SolvingCube(0, 2, 1) = "W" Then
+                Do Until SolvingCube(4, 0, 1) <> "W"
+                    B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                'Console.WriteLine("1")
+
+                'E4 magenta
+            ElseIf SolvingCube(3, 1, 0) = "W" Then
+                Do Until SolvingCube(4, 1, 0) <> "W"
+                    B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                UN(SolvingCube)
+                AddUpNot(ListOfMoves, MaxMoves)
+                'Console.WriteLine("2")
+
+                'E5 magenta
+            ElseIf SolvingCube(3, 2, 1) = "W" Then
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                'Console.WriteLine("3")
+
+                'E6 magenta
+            ElseIf SolvingCube(3, 1, 2) = "W" Then                             'HERE
+                Do Until SolvingCube(4, 1, 2) <> "W"
+                    B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                'Console.WriteLine("4")
+
+                'E6 blue
+            ElseIf SolvingCube(5, 2, 1) = "W" Then                             'HERE
+                Do Until SolvingCube(4, 0, 1) <> "W"
+                    B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                RN(SolvingCube)
+                AddRightNot(ListOfMoves, MaxMoves)
+                'Console.WriteLine("5")
+
+                'E7 red
+            ElseIf SolvingCube(1, 1, 0) = "W" Then
+                Do Until SolvingCube(4, 1, 0) <> "W"
+                    B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                'Console.WriteLine("6")
+
+                'E7 green
+            ElseIf SolvingCube(0, 0, 1) = "W" Then
+                Do Until SolvingCube(4, 2, 1) <> "W"
+                    B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                LN(SolvingCube)
+                AddLeftNot(ListOfMoves, MaxMoves)
+                'Console.WriteLine("7")
+
+                'E8 red
+            ElseIf SolvingCube(1, 1, 2) = "W" Then
+                Do Until SolvingCube(4, 1, 2) <> "W"
+                    B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                'Console.WriteLine("8")
+
+                'E8 blue
+            ElseIf SolvingCube(5, 0, 1) = "W" Then
+                Do Until SolvingCube(4, 2, 1) <> "W"
+                    B(SolvingCube)
+                    AddBack(ListOfMoves, MaxMoves)
+                Loop
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+                'Console.WriteLine("9")
+
+                'E9 red
+            ElseIf SolvingCube(1, 0, 1) = "W" Then
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                'Console.WriteLine("10")
+
+                'E10 green
+            ElseIf SolvingCube(0, 1, 0) = "W" Then
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                'Console.WriteLine("11")
+
+                'E11 blue
+            ElseIf SolvingCube(5, 1, 2) = "W" Then
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+                'Console.WriteLine("12")
+
+            End If
+
+            'Clear()
+
+            'draw(SolvingCube, noCursor)
+
+            'Console.ReadLine()
+
+        Loop
+
+        Return SolvingCube
+    End Function
+
+    Function Daisy2WhiteCross(SolvingCube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+        'Will match connectin edge to a white with its colour of centre then flip it to make a white cross.
+
+        Do Until SolvingCube(2, 1, 0) = "W" And SolvingCube(2, 0, 1) = "W" And SolvingCube(2, 2, 1) = "W" And SolvingCube(2, 1, 2) = "W"
+            If SolvingCube(0, 1, 0) = SolvingCube(0, 1, 1) And SolvingCube(4, 1, 0) = "W" Then
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+
+            ElseIf SolvingCube(1, 0, 1) = SolvingCube(1, 1, 1) And SolvingCube(4, 2, 1) = "W" Then
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+
+            ElseIf SolvingCube(3, 2, 1) = SolvingCube(3, 1, 1) And SolvingCube(4, 0, 1) = "W" Then
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+
+            ElseIf SolvingCube(5, 1, 2) = SolvingCube(5, 1, 1) And SolvingCube(4, 1, 2) = "W" Then
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+
+            Else
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+
+            End If
+        Loop
+
+        Return SolvingCube
+    End Function
+
+    Function WhiteCorners(SolvingCube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        SolvingCube = WhiteCornersToTop(SolvingCube, ListOfMoves, MaxMoves)
+
+        SolvingCube = WhiteCornersIntoPosition(SolvingCube, ListOfMoves, MaxMoves)
+
+        Return SolvingCube
+    End Function
+
+    Function WhiteCornersToTop(SolvingCube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        If SolvingCube(2, 0, 0) = "W" Or SolvingCube(1, 2, 0) = "W" Or SolvingCube(0, 0, 2) = "W" Then
+            Do Until SolvingCube(0, 0, 0) <> "W" And SolvingCube(1, 0, 0) <> "W" And SolvingCube(4, 2, 0) <> "W"
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+            Loop
+            LN(SolvingCube)
+            AddLeftNot(ListOfMoves, MaxMoves)
+            BN(SolvingCube)
+            AddBackNot(ListOfMoves, MaxMoves)
+            L(SolvingCube)
+            AddLeft(ListOfMoves, MaxMoves)
+        End If
+
+        If SolvingCube(2, 0, 2) = "W" Or SolvingCube(1, 2, 2) = "W" Or SolvingCube(5, 0, 0) = "W" Then
+            Do Until SolvingCube(1, 0, 2) <> "W" And SolvingCube(5, 0, 2) <> "W" And SolvingCube(4, 2, 2) <> "W"
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+            Loop
+            L(SolvingCube)
+            AddLeft(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            LN(SolvingCube)
+            AddLeftNot(ListOfMoves, MaxMoves)
+        End If
+
+        If SolvingCube(2, 2, 0) = "W" Or SolvingCube(0, 2, 2) = "W" Or SolvingCube(3, 0, 0) = "W" Then
+            Do Until SolvingCube(0, 2, 0) <> "W" And SolvingCube(3, 2, 0) <> "W" And SolvingCube(4, 0, 0) <> "W"
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+            Loop
+            R(SolvingCube)
+            AddRight(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            RN(SolvingCube)
+            AddRightNot(ListOfMoves, MaxMoves)
+        End If
+
+        If SolvingCube(2, 2, 2) = "W" Or SolvingCube(5, 2, 0) = "W" Or SolvingCube(3, 0, 2) = "W" Then
+            Do Until SolvingCube(5, 2, 2) <> "W" And SolvingCube(3, 2, 2) <> "W" And SolvingCube(4, 0, 2) <> "W"
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+            Loop
+            RN(SolvingCube)
+            AddRightNot(ListOfMoves, MaxMoves)
+            BN(SolvingCube)
+            AddBackNot(ListOfMoves, MaxMoves)
+            R(SolvingCube)
+            AddRight(ListOfMoves, MaxMoves)
+        End If
+
+        Return SolvingCube
+    End Function
+
+    Function WhiteCornersIntoPosition(SolvingCube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+        'Puts all the white corners in but with the correct side colours.
+        Dim FirstTime As Boolean
+
+
+        Dim noCursor(5, 2, 2) As Boolean
+        noCursor = drawNoCursor()
+
+
+
+        FirstTime = True
+        Do Until SolvingCube(2, 0, 0) = "W" And SolvingCube(1, 2, 0) = "R" And SolvingCube(0, 0, 2) = "G"
+            If (SolvingCube(0, 0, 0) = "R" Or SolvingCube(1, 0, 0) = "R" Or SolvingCube(4, 2, 0) = "R") And (SolvingCube(0, 0, 0) = "G" Or SolvingCube(1, 0, 0) = "G" Or SolvingCube(4, 2, 0) = "G") And (SolvingCube(0, 0, 0) = "W" Or SolvingCube(1, 0, 0) = "W" Or SolvingCube(4, 2, 0) = "W") Then
+                FirstTime = False
+            Else
+                If FirstTime = True Then
+                    Do Until (SolvingCube(0, 0, 0) = "R" Or SolvingCube(1, 0, 0) = "R" Or SolvingCube(4, 2, 0) = "R") And (SolvingCube(0, 0, 0) = "G" Or SolvingCube(1, 0, 0) = "G" Or SolvingCube(4, 2, 0) = "G") And (SolvingCube(0, 0, 0) = "W" Or SolvingCube(1, 0, 0) = "W" Or SolvingCube(4, 2, 0) = "W")
+                        B(SolvingCube)
+                        AddBack(ListOfMoves, MaxMoves)
+                    Loop
+                    FirstTime = False
+                End If
+            End If
+            LN(SolvingCube)
+            AddLeftNot(ListOfMoves, MaxMoves)
+            BN(SolvingCube)
+            AddBackNot(ListOfMoves, MaxMoves)
+            L(SolvingCube)
+            AddLeft(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+        Loop
+
+
+        FirstTime = True
+        Do Until SolvingCube(2, 2, 0) = "W" And SolvingCube(0, 2, 2) = "G" And SolvingCube(3, 0, 0) = "M"
+            If (SolvingCube(0, 2, 0) = "M" Or SolvingCube(3, 2, 0) = "M" Or SolvingCube(4, 0, 0) = "M") And (SolvingCube(0, 2, 0) = "G" Or SolvingCube(3, 2, 0) = "G" Or SolvingCube(4, 0, 0) = "G") And (SolvingCube(0, 2, 0) = "W" Or SolvingCube(3, 2, 0) = "W" Or SolvingCube(4, 0, 0) = "W") Then
+                FirstTime = False
+            Else
+
+                If FirstTime = True Then
+                    Do Until (SolvingCube(0, 2, 0) = "M" Or SolvingCube(3, 2, 0) = "M" Or SolvingCube(4, 0, 0) = "M") And (SolvingCube(0, 2, 0) = "G" Or SolvingCube(3, 2, 0) = "G" Or SolvingCube(4, 0, 0) = "G") And (SolvingCube(0, 2, 0) = "W" Or SolvingCube(3, 2, 0) = "W" Or SolvingCube(4, 0, 0) = "W")
+                        B(SolvingCube)
+                        AddBack(ListOfMoves, MaxMoves)
+                    Loop
+                    FirstTime = False
+                End If
+            End If
+
+            UN(SolvingCube)
+            AddUpNot(ListOfMoves, MaxMoves)
+            BN(SolvingCube)
+            AddBackNot(ListOfMoves, MaxMoves)
+            U(SolvingCube)
+            AddUp(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+        Loop
+
+        FirstTime = True
+        Do Until SolvingCube(2, 0, 2) = "W" And SolvingCube(1, 2, 2) = "R" And SolvingCube(5, 0, 0) = "B"
+            If (SolvingCube(1, 0, 2) = "R" Or SolvingCube(5, 0, 2) = "R" Or SolvingCube(4, 2, 2) = "R") And (SolvingCube(1, 0, 2) = "B" Or SolvingCube(5, 0, 2) = "B" Or SolvingCube(4, 2, 2) = "B") And (SolvingCube(1, 0, 2) = "W" Or SolvingCube(5, 0, 2) = "W" Or SolvingCube(4, 2, 2) = "W") Then
+                FirstTime = False
+            Else
+                If FirstTime = True Then
+                    Do Until (SolvingCube(1, 0, 2) = "R" Or SolvingCube(5, 0, 2) = "R" Or SolvingCube(4, 2, 2) = "R") And (SolvingCube(1, 0, 2) = "B" Or SolvingCube(5, 0, 2) = "B" Or SolvingCube(4, 2, 2) = "B") And (SolvingCube(1, 0, 2) = "W" Or SolvingCube(5, 0, 2) = "W" Or SolvingCube(4, 2, 2) = "W")
+                        B(SolvingCube)
+                        AddBack(ListOfMoves, MaxMoves)
+                    Loop
+                    FirstTime = False
+                End If
+            End If
+            DN(SolvingCube)
+            AddDownNot(ListOfMoves, MaxMoves)
+            BN(SolvingCube)
+            AddBackNot(ListOfMoves, MaxMoves)
+            D(SolvingCube)
+            AddDown(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+        Loop
+
+        FirstTime = True
+        Do Until SolvingCube(2, 2, 2) = "W" And SolvingCube(5, 2, 0) = "B" And SolvingCube(3, 0, 2) = "M"
+            If (SolvingCube(5, 2, 2) = "M" Or SolvingCube(3, 2, 2) = "M" Or SolvingCube(4, 0, 2) = "M") And (SolvingCube(5, 2, 2) = "B" Or SolvingCube(3, 2, 2) = "B" Or SolvingCube(4, 0, 2) = "B") And (SolvingCube(5, 2, 2) = "W" Or SolvingCube(3, 2, 2) = "W" Or SolvingCube(4, 0, 2) = "W") Then
+                FirstTime = False
+            Else
+                If FirstTime = True Then
+                    Do Until (SolvingCube(5, 2, 2) = "M" Or SolvingCube(3, 2, 2) = "M" Or SolvingCube(4, 0, 2) = "M") And (SolvingCube(5, 2, 2) = "B" Or SolvingCube(3, 2, 2) = "B" Or SolvingCube(4, 0, 2) = "B") And (SolvingCube(5, 2, 2) = "W" Or SolvingCube(3, 2, 2) = "W" Or SolvingCube(4, 0, 2) = "W")
+                        B(SolvingCube)
+                        AddBack(ListOfMoves, MaxMoves)
+                    Loop
+                    FirstTime = False
+                End If
+            End If
+            RN(SolvingCube)
+            AddRightNot(ListOfMoves, MaxMoves)
+            BN(SolvingCube)
+            AddBackNot(ListOfMoves, MaxMoves)
+            R(SolvingCube)
+            AddRight(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+        Loop
+
+
+        Return SolvingCube
+    End Function
+
+    Function CentreLayers(SolvingCube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        SolvingCube = YellowEdgeToL2(SolvingCube, ListOfMoves, MaxMoves)
+
+        SolvingCube = FinishL2(SolvingCube, ListOfMoves, MaxMoves)
+
+        Return SolvingCube
+    End Function
+
+    Function YellowEdgeToL2(SolvingCube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        Do Until (SolvingCube(0, 0, 1) = "Y" Or SolvingCube(1, 1, 0) = "Y") And (SolvingCube(0, 2, 1) = "Y" Or SolvingCube(3, 1, 0) = "Y") And (SolvingCube(5, 2, 1) = "Y" Or SolvingCube(3, 1, 2) = "Y") And (SolvingCube(5, 0, 1) = "Y" Or SolvingCube(1, 1, 2) = "Y")
+
+            If (SolvingCube(0, 1, 0) = "Y" And SolvingCube(4, 1, 0) = "M") Or (SolvingCube(0, 1, 0) = "M" And SolvingCube(4, 1, 0) = "Y") Then
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                RN(SolvingCube)
+                AddRightNot(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                UN(SolvingCube)
+                AddUpNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+
+            ElseIf (SolvingCube(3, 2, 1) = "Y" And SolvingCube(4, 0, 1) = "B") Or (SolvingCube(3, 2, 1) = "B" And SolvingCube(4, 0, 1) = "Y") Then
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                RN(SolvingCube)
+                AddRightNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+
+            ElseIf (SolvingCube(5, 1, 2) = "Y" And SolvingCube(4, 1, 2) = "R") Or (SolvingCube(5, 1, 2) = "R" And SolvingCube(4, 1, 2) = "Y") Then
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                LN(SolvingCube)
+                AddLeftNot(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+
+            ElseIf (SolvingCube(1, 0, 1) = "Y" And SolvingCube(4, 2, 1) = "G") Or (SolvingCube(1, 0, 1) = "G" And SolvingCube(4, 2, 1) = "Y") Then
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                UN(SolvingCube)
+                AddUpNot(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                LN(SolvingCube)
+                AddLeftNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+
+            Else
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+
+            End If
+
+        Loop
+
+        Return SolvingCube
+    End Function
+
+    Function FinishL2(SolvingCube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        Do Until (SolvingCube(0, 0, 1) = "G" And SolvingCube(1, 1, 0) = "R") And (SolvingCube(0, 2, 1) = "G" And SolvingCube(3, 1, 0) = "M") And (SolvingCube(5, 2, 1) = "B" And SolvingCube(3, 1, 2) = "M") And (SolvingCube(5, 0, 1) = "B" And SolvingCube(1, 1, 2) = "R")
+
+            If (SolvingCube(0, 1, 0) = "G" And SolvingCube(4, 1, 0) = "M") Then
+                'right on green face
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                RN(SolvingCube)
+                AddRightNot(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                UN(SolvingCube)
+                AddUpNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+
+            ElseIf (SolvingCube(3, 2, 1) = "M" And SolvingCube(4, 0, 1) = "B") Then
+                'right on magenta face
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                RN(SolvingCube)
+                AddRightNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+
+            ElseIf (SolvingCube(5, 1, 2) = "B" And SolvingCube(4, 1, 2) = "R") Then
+                'right on blue face
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                LN(SolvingCube)
+                AddLeftNot(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+
+            ElseIf (SolvingCube(1, 0, 1) = "R" And SolvingCube(4, 2, 1) = "G") Then
+                'right on red face
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                UN(SolvingCube)
+                AddUpNot(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                LN(SolvingCube)
+                AddLeftNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+
+            ElseIf (SolvingCube(0, 1, 0) = "G" And SolvingCube(4, 1, 0) = "R") Then
+                'left on green face
+
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                LN(SolvingCube)
+                AddLeftNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                UN(SolvingCube)
+                AddUpNot(ListOfMoves, MaxMoves)
+
+            ElseIf (SolvingCube(3, 2, 1) = "M" And SolvingCube(4, 0, 1) = "G") Then
+                'left on magenta face
+
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                UN(SolvingCube)
+                AddUpNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                RN(SolvingCube)
+                AddRightNot(ListOfMoves, MaxMoves)
+
+            ElseIf (SolvingCube(5, 1, 2) = "B" And SolvingCube(4, 1, 2) = "M") Then
+                'left on blue face
+
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                RN(SolvingCube)
+                AddRightNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+
+            ElseIf (SolvingCube(1, 0, 1) = "R" And SolvingCube(4, 2, 1) = "B") Then
+                'left on red face
+
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                LN(SolvingCube)
+                AddLeftNot(ListOfMoves, MaxMoves)
+
+            Else
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+
+            End If
+
+        Loop
+
+        Return SolvingCube
+    End Function
+
+    Function YellowCross(SolvingCube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+
+
+
+        Dim noCursor(5, 2, 2) As Boolean
+        noCursor = drawNoCursor()
+
+
+
+        Do Until SolvingCube(4, 1, 0) = "Y" And SolvingCube(4, 0, 1) = "Y" And SolvingCube(4, 1, 1) = "Y" And SolvingCube(4, 1, 2) = "Y" And SolvingCube(4, 2, 1) = "Y"
+            If SolvingCube(4, 1, 0) = "Y" And SolvingCube(4, 1, 1) = "Y" And SolvingCube(4, 1, 2) = "Y" Then
+
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                RN(SolvingCube)
+                AddRightNot(ListOfMoves, MaxMoves)
+
+            ElseIf SolvingCube(4, 0, 1) = "Y" And SolvingCube(4, 1, 1) = "Y" And SolvingCube(4, 2, 1) = "Y" Then
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                'B(solvingcube)AddBack(ListOfMoves, MaxMoves)
+
+            ElseIf SolvingCube(4, 1, 0) = "Y" And SolvingCube(4, 1, 1) = "Y" And SolvingCube(4, 2, 1) = "Y" Then
+
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                RN(SolvingCube)
+                AddRightNot(ListOfMoves, MaxMoves)
+
+            ElseIf SolvingCube(4, 1, 2) = "Y" And SolvingCube(4, 1, 1) = "Y" And SolvingCube(4, 2, 1) = "Y" Then
+
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+
+            ElseIf SolvingCube(4, 1, 2) = "Y" And SolvingCube(4, 1, 1) = "Y" And SolvingCube(4, 0, 1) = "Y" Then
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+
+            ElseIf SolvingCube(4, 1, 0) = "Y" And SolvingCube(4, 1, 1) = "Y" And SolvingCube(4, 0, 1) = "Y" Then
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+
+            Else
+
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                RN(SolvingCube)
+                AddRightNot(ListOfMoves, MaxMoves)
+
+            End If
+
+        Loop
+
+        Return SolvingCube
+    End Function
+
+    Function SwapYellowEdges(SolvingCube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+        Dim gip, mip, bip, rip As String
+
+
+
+        Dim noCursor(5, 2, 2) As Boolean
+        noCursor = drawNoCursor()
+
+
+
+
+        gip = SolvingCube(0, 1, 0)
+        rip = SolvingCube(1, 0, 1)
+        mip = SolvingCube(3, 2, 1)
+        bip = SolvingCube(5, 1, 2)
+
+        Do Until (gip = "G" And mip = "M") Or (gip = "G" And bip = "B") Or (gip = "G" And rip = "R") Or (mip = "M" And bip = "B") Or (mip = "M" And rip = "R") Or (bip = "B" And rip = "R")
+
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+
+            gip = SolvingCube(0, 1, 0)
+            rip = SolvingCube(1, 0, 1)
+            mip = SolvingCube(3, 2, 1)
+            bip = SolvingCube(5, 1, 2)
+
+        Loop
+
+
+
+
+        'Clear()
+        '
+        'Console.WriteLine("One done")
+        '
+        'draw(SolvingCube, noCursor)
+        '
+        'Console.ReadLine()
+
+
+
+
+        If gip = "G" And mip = "M" Then
+
+            U(SolvingCube)
+            AddUp(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            UN(SolvingCube)
+            AddUpNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            U(SolvingCube)
+            AddUp(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            UN(SolvingCube)
+            AddUpNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+
+
+
+
+            'Clear()
+            '
+            'Console.WriteLine("G and M")
+            '
+            'draw(SolvingCube, noCursor)
+            '
+            'Console.ReadLine()
+
+
+
+
+        ElseIf gip = "G" And bip = "B" Then
+
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            R(SolvingCube)
+            AddRight(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            RN(SolvingCube)
+            AddRightNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            R(SolvingCube)
+            AddRight(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            RN(SolvingCube)
+            AddRightNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            L(SolvingCube)
+            AddLeft(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            LN(SolvingCube)
+            AddLeftNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            L(SolvingCube)
+            AddLeft(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            LN(SolvingCube)
+            AddLeftNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+
+
+            'Clear()
+            '
+            'Console.WriteLine("G and B")
+            '
+            'draw(SolvingCube, noCursor)
+            '
+            'Console.ReadLine()
+
+
+
+
+        ElseIf gip = "G" And rip = "R" Then
+
+            L(SolvingCube)
+            AddLeft(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            LN(SolvingCube)
+            AddLeftNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            L(SolvingCube)
+            AddLeft(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            LN(SolvingCube)
+            AddLeftNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+
+
+
+            'Clear()
+            '
+            'Console.WriteLine("G and R")
+            '
+            'draw(SolvingCube, noCursor)
+            '
+            'Console.ReadLine()
+
+
+
+
+        ElseIf mip = "M" And bip = "B" Then
+
+            R(SolvingCube)
+            AddRight(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            RN(SolvingCube)
+            AddRightNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            R(SolvingCube)
+            AddRight(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            RN(SolvingCube)
+            AddRightNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+
+
+
+
+            'Clear()
+            '
+            'Console.WriteLine("B and M")
+            '
+            'draw(SolvingCube, noCursor)
+            '
+            'Console.ReadLine()
+
+
+
+
+        ElseIf mip = "M" And rip = "R" Then
+
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            L(SolvingCube)
+            AddLeft(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            LN(SolvingCube)
+            AddLeftNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            L(SolvingCube)
+            AddLeft(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            LN(SolvingCube)
+            AddLeftNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            R(SolvingCube)
+            AddRight(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            RN(SolvingCube)
+            AddRightNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            R(SolvingCube)
+            AddRight(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            RN(SolvingCube)
+            AddRightNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+
+
+
+
+            'Clear()
+            '
+            'Console.WriteLine("R and M")
+            '
+            'draw(SolvingCube, noCursor)
+            '
+            'Console.ReadLine()
+
+
+
+
+        ElseIf bip = "B" And rip = "R" Then
+
+            D(SolvingCube)
+            AddDown(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            DN(SolvingCube)
+            AddDownNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            D(SolvingCube)
+            AddDown(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            DN(SolvingCube)
+            AddDownNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+
+
+
+
+            'Clear()
+            '
+            'Console.WriteLine("B and R")
+            '
+            'draw(SolvingCube, noCursor)
+            '
+            'Console.ReadLine()
+
+
+
+
+        End If
+
+
+
+
+        'Clear()
+        '
+        'Console.WriteLine("End of 6.")
+        '
+        'draw(SolvingCube, noCursor)
+        '
+        'Console.ReadLine()
+
+
+
+
+        Return SolvingCube
+    End Function
+
+    Function CycleCorners(SolvingCube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+
+
+
+        Dim noCursor(5, 2, 2) As Boolean
+        noCursor = drawNoCursor()
+
+        If (SolvingCube(0, 0, 0) = "G" Or SolvingCube(1, 0, 0) = "G" Or SolvingCube(4, 2, 0) = "G") And (SolvingCube(0, 0, 0) = "M" Or SolvingCube(1, 0, 0) = "M" Or SolvingCube(4, 2, 0) = "M") Then
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            R(SolvingCube)
+            AddRight(ListOfMoves, MaxMoves)
+            BN(SolvingCube)
+            AddBackNot(ListOfMoves, MaxMoves)
+            LN(SolvingCube)
+            AddLeftNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            RN(SolvingCube)
+            AddRightNot(ListOfMoves, MaxMoves)
+            BN(SolvingCube)
+            AddBackNot(ListOfMoves, MaxMoves)
+            L(SolvingCube)
+            AddLeft(ListOfMoves, MaxMoves)
+        End If
+
+        Do Until (SolvingCube(0, 2, 0) = "G" Or SolvingCube(3, 2, 0) = "G" Or SolvingCube(4, 0, 0) = "G") And (SolvingCube(0, 2, 0) = "M" Or SolvingCube(3, 2, 0) = "M" Or SolvingCube(4, 0, 0) = "M")
+
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            U(SolvingCube)
+            AddUp(ListOfMoves, MaxMoves)
+            BN(SolvingCube)
+            AddBackNot(ListOfMoves, MaxMoves)
+            DN(SolvingCube)
+            AddDownNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            UN(SolvingCube)
+            AddUpNot(ListOfMoves, MaxMoves)
+            BN(SolvingCube)
+            AddBackNot(ListOfMoves, MaxMoves)
+            D(SolvingCube)
+            AddDown(ListOfMoves, MaxMoves)
+
+        Loop
+
+        Do Until (SolvingCube(0, 0, 0) = "G" Or SolvingCube(1, 0, 0) = "G" Or SolvingCube(4, 2, 0) = "G") And (SolvingCube(0, 0, 0) = "R" Or SolvingCube(1, 0, 0) = "R" Or SolvingCube(4, 2, 0) = "R")
+
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            R(SolvingCube)
+            AddRight(ListOfMoves, MaxMoves)
+            BN(SolvingCube)
+            AddBackNot(ListOfMoves, MaxMoves)
+            LN(SolvingCube)
+            AddLeftNot(ListOfMoves, MaxMoves)
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+            RN(SolvingCube)
+            AddRightNot(ListOfMoves, MaxMoves)
+            BN(SolvingCube)
+            AddBackNot(ListOfMoves, MaxMoves)
+            L(SolvingCube)
+            AddLeft(ListOfMoves, MaxMoves)
+
+        Loop
+
+        Return SolvingCube
+    End Function
+
+    Function OrientCorners(SolvingCube(,,) As String, ListOfMoves As List(Of String), MaxMoves As Integer)
+
+
+        Dim noCursor(5, 2, 2) As Boolean
+        noCursor = drawNoCursor()
+
+
+        If SolvingCube(4, 0, 0) <> "Y" Then
+            Do Until SolvingCube(4, 0, 0) = "Y" And SolvingCube(4, 2, 0) = "Y" And SolvingCube(4, 0, 2) = "Y" And SolvingCube(4, 2, 2) = "Y"
+
+                Do Until SolvingCube(4, 0, 0) = "Y"
+
+                    RN(SolvingCube)
+                    AddRightNot(ListOfMoves, MaxMoves)
+                    FN(SolvingCube)
+                    AddFrontNot(ListOfMoves, MaxMoves)
+                    R(SolvingCube)
+                    AddRight(ListOfMoves, MaxMoves)
+                    F(SolvingCube)
+                    AddFront(ListOfMoves, MaxMoves)
+
+                Loop
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+
+            Loop
+        ElseIf SolvingCube(4, 2, 0) <> "Y" Then
+            Do Until SolvingCube(4, 0, 0) = "Y" And SolvingCube(4, 2, 0) = "Y" And SolvingCube(4, 0, 2) = "Y" And SolvingCube(4, 2, 2) = "Y"
+
+                Do Until SolvingCube(4, 2, 0) = "Y"
+
+                    UN(SolvingCube)
+                    AddUpNot(ListOfMoves, MaxMoves)
+                    FN(SolvingCube)
+                    AddFrontNot(ListOfMoves, MaxMoves)
+                    U(SolvingCube)
+                    AddUp(ListOfMoves, MaxMoves)
+                    F(SolvingCube)
+                    AddFront(ListOfMoves, MaxMoves)
+                Loop
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+            Loop
+        ElseIf SolvingCube(4, 0, 2) <> "Y" Then
+            Do Until SolvingCube(4, 0, 0) = "Y" And SolvingCube(4, 2, 0) = "Y" And SolvingCube(4, 0, 2) = "Y" And SolvingCube(4, 2, 2) = "Y"
+
+                Do Until SolvingCube(4, 0, 2) = "Y"
+
+                    DN(SolvingCube)
+                    AddDownNot(ListOfMoves, MaxMoves)
+                    FN(SolvingCube)
+                    AddFrontNot(ListOfMoves, MaxMoves)
+                    D(SolvingCube)
+                    AddDown(ListOfMoves, MaxMoves)
+                    F(SolvingCube)
+                    AddFront(ListOfMoves, MaxMoves)
+
+                Loop
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+
+            Loop
+        ElseIf SolvingCube(4, 2, 2) <> "Y" Then
+            Do Until SolvingCube(4, 0, 0) = "Y" And SolvingCube(4, 2, 0) = "Y" And SolvingCube(4, 0, 2) = "Y" And SolvingCube(4, 2, 2) = "Y"
+
+                Do Until SolvingCube(4, 2, 2) = "Y"
+
+                    LN(SolvingCube)
+                    AddLeftNot(ListOfMoves, MaxMoves)
+                    FN(SolvingCube)
+                    AddFrontNot(ListOfMoves, MaxMoves)
+                    L(SolvingCube)
+                    AddLeft(ListOfMoves, MaxMoves)
+                    F(SolvingCube)
+                    AddFront(ListOfMoves, MaxMoves)
+
+                Loop
+
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+
+            Loop
+        End If
+
+        Do Until SolvingCube(0, 1, 0) = "G"
+
+            B(SolvingCube)
+            AddBack(ListOfMoves, MaxMoves)
+
+        Loop
+
+        Dim correct As Boolean
+
+        correct = finalCheck(SolvingCube)
+
+        If correct = False Then
+            'seemed to be two same errors so I put into solver to fix tehm
+            If SolvingCube(0, 0, 0) = "B" Then
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                F(SolvingCube)
+                AddFront(ListOfMoves, MaxMoves)
+                F(SolvingCube)
+                AddFront(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+                L(SolvingCube)
+                AddLeft(ListOfMoves, MaxMoves)
+                F(SolvingCube)
+                AddFront(ListOfMoves, MaxMoves)
+                F(SolvingCube)
+                AddFront(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+
+            ElseIf SolvingCube(1, 0, 1) = "B" Then
+
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                F(SolvingCube)
+                AddFront(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                BN(SolvingCube)
+                AddBackNot(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                FN(SolvingCube)
+                AddFrontNot(ListOfMoves, MaxMoves)
+                UN(SolvingCube)
+                AddUpNot(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                UN(SolvingCube)
+                AddUpNot(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                U(SolvingCube)
+                AddUp(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                DN(SolvingCube)
+                AddDownNot(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                R(SolvingCube)
+                AddRight(ListOfMoves, MaxMoves)
+                D(SolvingCube)
+                AddDown(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+                B(SolvingCube)
+                AddBack(ListOfMoves, MaxMoves)
+
+            End If
+
+
+
+            correct = finalCheck(SolvingCube)
+        End If
+
+        If correct = False Then
+            Console.WriteLine("FAIL! ):")
+            Console.ReadLine()
+        End If
+
+        Return SolvingCube
+    End Function
+
+    Function finalCheck(SolvingCube(,,))
+        Dim correct As Boolean = True
+
+        'green face
+        For i = 0 To 2
+            For v = 0 To 2
+                If SolvingCube(0, i, v) <> "G" Then
+                    correct = False
+                End If
+            Next
+        Next
+
+        'red face
+        For i = 0 To 2
+            For v = 0 To 2
+                If SolvingCube(1, i, v) <> "R" Then
+                    correct = False
+                End If
+            Next
+        Next
+
+        'white face
+        For i = 0 To 2
+            For v = 0 To 2
+                If SolvingCube(2, i, v) <> "W" Then
+                    correct = False
+                End If
+            Next
+        Next
+
+        'magenta/orange face
+        For i = 0 To 2
+            For v = 0 To 2
+                If SolvingCube(3, i, v) <> "M" Then
+                    correct = False
+                End If
+            Next
+        Next
+
+        'yellow face
+        For i = 0 To 2
+            For v = 0 To 2
+                If SolvingCube(4, i, v) <> "Y" Then
+                    correct = False
+                End If
+            Next
+        Next
+
+        'blue face
+        For i = 0 To 2
+            For v = 0 To 2
+                If SolvingCube(5, i, v) <> "B" Then
+                    correct = False
+                End If
+            Next
+        Next
+
+        Return correct
+    End Function
+
+    Function drawNoCursor()
+        Dim noCursor(5, 2, 2) As Boolean
+
+        For Fa = 0 To 5
+            For y = 0 To 2
+                For x = 0 To 2
+                    noCursor(Fa, x, y) = False
+                Next
+            Next
+        Next
+
+        Return noCursor
+    End Function
+
+    'MOVES:----------------------------------
+
+    Function U(Cube(,,))
+        Dim save(2) As String
+
+        'top face 90
+        save(0) = Cube(0, 0, 0)
+        save(1) = Cube(0, 1, 0)
+        save(2) = Cube(0, 2, 0)
+        Cube(0, 1, 0) = Cube(0, 0, 1)
+        Cube(0, 0, 0) = Cube(0, 0, 2)
+        Cube(0, 0, 1) = Cube(0, 1, 2)
+        Cube(0, 0, 2) = Cube(0, 2, 2)
+        Cube(0, 1, 2) = Cube(0, 2, 1)
+        Cube(0, 2, 2) = save(2)
+        Cube(0, 2, 1) = save(1)
+        Cube(0, 2, 0) = save(0)
+
+        'move top row left 1 face
+        save(0) = Cube(1, 0, 0)
+        save(1) = Cube(1, 1, 0)
+        save(2) = Cube(1, 2, 0)
+        Cube(1, 0, 0) = Cube(2, 0, 0)
+        Cube(1, 1, 0) = Cube(2, 1, 0)
+        Cube(1, 2, 0) = Cube(2, 2, 0)
+        Cube(2, 0, 0) = Cube(3, 0, 0)
+        Cube(2, 1, 0) = Cube(3, 1, 0)
+        Cube(2, 2, 0) = Cube(3, 2, 0)
+        Cube(3, 0, 0) = Cube(4, 0, 0)
+        Cube(3, 1, 0) = Cube(4, 1, 0)
+        Cube(3, 2, 0) = Cube(4, 2, 0)
+        Cube(4, 0, 0) = save(0)
+        Cube(4, 1, 0) = save(1)
+        Cube(4, 2, 0) = save(2)
+
+        Return Cube
+    End Function
+
+    Function D(Cube(,,))
+        Dim save(2) As String
+
+        'bottom face 90
+        save(0) = Cube(5, 0, 0)
+        save(1) = Cube(5, 1, 0)
+        save(2) = Cube(5, 2, 0)
+        Cube(5, 1, 0) = Cube(5, 0, 1)
+        Cube(5, 0, 0) = Cube(5, 0, 2)
+        Cube(5, 0, 1) = Cube(5, 1, 2)
+        Cube(5, 0, 2) = Cube(5, 2, 2)
+        Cube(5, 1, 2) = Cube(5, 2, 1)
+        Cube(5, 2, 2) = save(2)
+        Cube(5, 2, 1) = save(1)
+        Cube(5, 2, 0) = save(0)
+
+        'move bottom row right 1 face
+        save(0) = Cube(3, 0, 2)
+        save(1) = Cube(3, 1, 2)
+        save(2) = Cube(3, 2, 2)
+        Cube(3, 0, 2) = Cube(2, 0, 2)
+        Cube(3, 1, 2) = Cube(2, 1, 2)
+        Cube(3, 2, 2) = Cube(2, 2, 2)
+        Cube(2, 0, 2) = Cube(1, 0, 2)
+        Cube(2, 1, 2) = Cube(1, 1, 2)
+        Cube(2, 2, 2) = Cube(1, 2, 2)
+        Cube(1, 0, 2) = Cube(4, 0, 2)
+        Cube(1, 1, 2) = Cube(4, 1, 2)
+        Cube(1, 2, 2) = Cube(4, 2, 2)
+        Cube(4, 0, 2) = save(0)
+        Cube(4, 1, 2) = save(1)
+        Cube(4, 2, 2) = save(2)
+
+        Return Cube
+    End Function
+
+    Function L(Cube(,,))
+        Dim save(2) As String
+
+        'left face 90
+        save(0) = Cube(1, 0, 0)
+        save(1) = Cube(1, 1, 0)
+        save(2) = Cube(1, 2, 0)
+        Cube(1, 1, 0) = Cube(1, 0, 1)
+        Cube(1, 0, 0) = Cube(1, 0, 2)
+        Cube(1, 0, 1) = Cube(1, 1, 2)
+        Cube(1, 0, 2) = Cube(1, 2, 2)
+        Cube(1, 1, 2) = Cube(1, 2, 1)
+        Cube(1, 2, 2) = save(2)
+        Cube(1, 2, 1) = save(1)
+        Cube(1, 2, 0) = save(0)
+
+        'left side down 1
+        save(0) = Cube(5, 0, 0)
+        save(1) = Cube(5, 0, 1)
+        save(2) = Cube(5, 0, 2)
+        Cube(5, 0, 0) = Cube(2, 0, 0)
+        Cube(5, 0, 1) = Cube(2, 0, 1)
+        Cube(5, 0, 2) = Cube(2, 0, 2)
+        Cube(2, 0, 0) = Cube(0, 0, 0)
+        Cube(2, 0, 1) = Cube(0, 0, 1)
+        Cube(2, 0, 2) = Cube(0, 0, 2)
+        Cube(0, 0, 0) = Cube(4, 2, 2)
+        Cube(0, 0, 1) = Cube(4, 2, 1)
+        Cube(0, 0, 2) = Cube(4, 2, 0)
+        Cube(4, 2, 0) = save(2)
+        Cube(4, 2, 1) = save(1)
+        Cube(4, 2, 2) = save(0)
+
+        Return Cube
+    End Function
+
+    Function R(Cube(,,))
+        Dim save(2) As String
+
+        'right face 90
+        save(0) = Cube(3, 0, 0)
+        save(1) = Cube(3, 1, 0)
+        save(2) = Cube(3, 2, 0)
+        Cube(3, 1, 0) = Cube(3, 0, 1)
+        Cube(3, 0, 0) = Cube(3, 0, 2)
+        Cube(3, 0, 1) = Cube(3, 1, 2)
+        Cube(3, 0, 2) = Cube(3, 2, 2)
+        Cube(3, 1, 2) = Cube(3, 2, 1)
+        Cube(3, 2, 2) = save(2)
+        Cube(3, 2, 1) = save(1)
+        Cube(3, 2, 0) = save(0)
+
+        'right side down 1
+        save(0) = Cube(0, 2, 0)
+        save(1) = Cube(0, 2, 1)
+        save(2) = Cube(0, 2, 2)
+        Cube(0, 2, 0) = Cube(2, 2, 0)
+        Cube(0, 2, 1) = Cube(2, 2, 1)
+        Cube(0, 2, 2) = Cube(2, 2, 2)
+        Cube(2, 2, 0) = Cube(5, 2, 0)
+        Cube(2, 2, 1) = Cube(5, 2, 1)
+        Cube(2, 2, 2) = Cube(5, 2, 2)
+        Cube(5, 2, 0) = Cube(4, 0, 2)
+        Cube(5, 2, 1) = Cube(4, 0, 1)
+        Cube(5, 2, 2) = Cube(4, 0, 0)
+        Cube(4, 0, 0) = save(2)
+        Cube(4, 0, 1) = save(1)
+        Cube(4, 0, 2) = save(0)
+
+        Return Cube
+    End Function
+
+    Function F(Cube(,,))
+        Dim save(2) As String
+
+        'front face 90
+        save(0) = Cube(2, 0, 0)
+        save(1) = Cube(2, 1, 0)
+        save(2) = Cube(2, 2, 0)
+        Cube(2, 1, 0) = Cube(2, 0, 1)
+        Cube(2, 0, 0) = Cube(2, 0, 2)
+        Cube(2, 0, 1) = Cube(2, 1, 2)
+        Cube(2, 0, 2) = Cube(2, 2, 2)
+        Cube(2, 1, 2) = Cube(2, 2, 1)
+        Cube(2, 2, 2) = save(2)
+        Cube(2, 2, 1) = save(1)
+        Cube(2, 2, 0) = save(0)
+
+        'spin connecting parts 90 degrees
+        save(0) = Cube(1, 2, 0)
+        save(1) = Cube(1, 2, 1)
+        save(2) = Cube(1, 2, 2)
+        Cube(1, 2, 0) = Cube(5, 0, 0)
+        Cube(1, 2, 1) = Cube(5, 1, 0)
+        Cube(1, 2, 2) = Cube(5, 2, 0)
+        Cube(5, 0, 0) = Cube(3, 0, 2)
+        Cube(5, 1, 0) = Cube(3, 0, 1)
+        Cube(5, 2, 0) = Cube(3, 0, 0)
+        Cube(3, 0, 0) = Cube(0, 0, 2)
+        Cube(3, 0, 1) = Cube(0, 1, 2)
+        Cube(3, 0, 2) = Cube(0, 2, 2)
+        Cube(0, 0, 2) = save(2)
+        Cube(0, 1, 2) = save(1)
+        Cube(0, 2, 2) = save(0)
+
+        Return Cube
+    End Function
+
+    Function B(Cube(,,))
+        Dim save(2) As String
+
+        'back face 90
+        save(0) = Cube(4, 0, 0)
+        save(1) = Cube(4, 1, 0)
+        save(2) = Cube(4, 2, 0)
+        Cube(4, 1, 0) = Cube(4, 0, 1)
+        Cube(4, 0, 0) = Cube(4, 0, 2)
+        Cube(4, 0, 1) = Cube(4, 1, 2)
+        Cube(4, 0, 2) = Cube(4, 2, 2)
+        Cube(4, 1, 2) = Cube(4, 2, 1)
+        Cube(4, 2, 2) = save(2)
+        Cube(4, 2, 1) = save(1)
+        Cube(4, 2, 0) = save(0)
+
+        'move furthest of connected to middle anti-clock
+        save(0) = Cube(5, 0, 2)
+        save(1) = Cube(5, 1, 2)
+        save(2) = Cube(5, 2, 2)
+        Cube(5, 0, 2) = Cube(1, 0, 0)
+        Cube(5, 1, 2) = Cube(1, 0, 1)
+        Cube(5, 2, 2) = Cube(1, 0, 2)
+        Cube(1, 0, 0) = Cube(0, 2, 0)
+        Cube(1, 0, 1) = Cube(0, 1, 0)
+        Cube(1, 0, 2) = Cube(0, 0, 0)
+        Cube(0, 0, 0) = Cube(3, 2, 0)
+        Cube(0, 1, 0) = Cube(3, 2, 1)
+        Cube(0, 2, 0) = Cube(3, 2, 2)
+        Cube(3, 2, 0) = save(2)
+        Cube(3, 2, 1) = save(1)
+        Cube(3, 2, 2) = save(0)
+
+        Return Cube
+    End Function
+
+    Function UN(Cube(,,))
+        Dim save(2) As String
+
+        'up face -90
+        save(0) = Cube(0, 0, 0)
+        save(1) = Cube(0, 1, 0)
+        save(2) = Cube(0, 2, 0)
+        Cube(0, 1, 0) = Cube(0, 2, 1)
+        Cube(0, 2, 0) = Cube(0, 2, 2)
+        Cube(0, 2, 1) = Cube(0, 1, 2)
+        Cube(0, 2, 2) = Cube(0, 0, 2)
+        Cube(0, 1, 2) = Cube(0, 0, 1)
+        Cube(0, 0, 0) = save(2)
+        Cube(0, 0, 1) = save(1)
+        Cube(0, 0, 2) = save(0)
+
+        'move top row right 1 face
+        save(0) = Cube(3, 0, 0)
+        save(1) = Cube(3, 1, 0)
+        save(2) = Cube(3, 2, 0)
+        Cube(3, 0, 0) = Cube(2, 0, 0)
+        Cube(3, 1, 0) = Cube(2, 1, 0)
+        Cube(3, 2, 0) = Cube(2, 2, 0)
+        Cube(2, 0, 0) = Cube(1, 0, 0)
+        Cube(2, 1, 0) = Cube(1, 1, 0)
+        Cube(2, 2, 0) = Cube(1, 2, 0)
+        Cube(1, 0, 0) = Cube(4, 0, 0)
+        Cube(1, 1, 0) = Cube(4, 1, 0)
+        Cube(1, 2, 0) = Cube(4, 2, 0)
+        Cube(4, 0, 0) = save(0)
+        Cube(4, 1, 0) = save(1)
+        Cube(4, 2, 0) = save(2)
+
+        Return Cube
+    End Function
+
+    Function DN(Cube(,,))
+        Dim save(2) As String
+
+        'up face -90
+        save(0) = Cube(5, 0, 0)
+        save(1) = Cube(5, 1, 0)
+        save(2) = Cube(5, 2, 0)
+        Cube(5, 1, 0) = Cube(5, 2, 1)
+        Cube(5, 2, 0) = Cube(5, 2, 2)
+        Cube(5, 2, 1) = Cube(5, 1, 2)
+        Cube(5, 2, 2) = Cube(5, 0, 2)
+        Cube(5, 1, 2) = Cube(5, 0, 1)
+        Cube(5, 0, 0) = save(2)
+        Cube(5, 0, 1) = save(1)
+        Cube(5, 0, 2) = save(0)
+
+        'move bottom row right 1 face
+        save(0) = Cube(1, 0, 2)
+        save(1) = Cube(1, 1, 2)
+        save(2) = Cube(1, 2, 2)
+        Cube(1, 0, 2) = Cube(2, 0, 2)
+        Cube(1, 1, 2) = Cube(2, 1, 2)
+        Cube(1, 2, 2) = Cube(2, 2, 2)
+        Cube(2, 0, 2) = Cube(3, 0, 2)
+        Cube(2, 1, 2) = Cube(3, 1, 2)
+        Cube(2, 2, 2) = Cube(3, 2, 2)
+        Cube(3, 0, 2) = Cube(4, 0, 2)
+        Cube(3, 1, 2) = Cube(4, 1, 2)
+        Cube(3, 2, 2) = Cube(4, 2, 2)
+        Cube(4, 0, 2) = save(0)
+        Cube(4, 1, 2) = save(1)
+        Cube(4, 2, 2) = save(2)
+
+        Return Cube
+    End Function
+
+    Function LN(Cube(,,))
+        Dim save(2) As String
+
+        'left face -90
+        save(0) = Cube(1, 0, 0)
+        save(1) = Cube(1, 1, 0)
+        save(2) = Cube(1, 2, 0)
+        Cube(1, 1, 0) = Cube(1, 2, 1)
+        Cube(1, 2, 0) = Cube(1, 2, 2)
+        Cube(1, 2, 1) = Cube(1, 1, 2)
+        Cube(1, 2, 2) = Cube(1, 0, 2)
+        Cube(1, 1, 2) = Cube(1, 0, 1)
+        Cube(1, 0, 0) = save(2)
+        Cube(1, 0, 1) = save(1)
+        Cube(1, 0, 2) = save(0)
+
+        'left side up 1
+        save(0) = Cube(0, 0, 0)
+        save(1) = Cube(0, 0, 1)
+        save(2) = Cube(0, 0, 2)
+        Cube(0, 0, 0) = Cube(2, 0, 0)
+        Cube(0, 0, 1) = Cube(2, 0, 1)
+        Cube(0, 0, 2) = Cube(2, 0, 2)
+        Cube(2, 0, 0) = Cube(5, 0, 0)
+        Cube(2, 0, 1) = Cube(5, 0, 1)
+        Cube(2, 0, 2) = Cube(5, 0, 2)
+        Cube(5, 0, 0) = Cube(4, 2, 2)
+        Cube(5, 0, 1) = Cube(4, 2, 1)
+        Cube(5, 0, 2) = Cube(4, 2, 0)
+        Cube(4, 2, 0) = save(2)
+        Cube(4, 2, 1) = save(1)
+        Cube(4, 2, 2) = save(0)
+
+        Return Cube
+    End Function
+
+    Function RN(Cube(,,))
+        Dim save(2) As String
+
+        'right face -90
+        save(0) = Cube(3, 0, 0)
+        save(1) = Cube(3, 1, 0)
+        save(2) = Cube(3, 2, 0)
+        Cube(3, 1, 0) = Cube(3, 2, 1)
+        Cube(3, 2, 0) = Cube(3, 2, 2)
+        Cube(3, 2, 1) = Cube(3, 1, 2)
+        Cube(3, 2, 2) = Cube(3, 0, 2)
+        Cube(3, 1, 2) = Cube(3, 0, 1)
+        Cube(3, 0, 0) = save(2)
+        Cube(3, 0, 1) = save(1)
+        Cube(3, 0, 2) = save(0)
+
+        'right side up 1
+        save(0) = Cube(5, 2, 0)
+        save(1) = Cube(5, 2, 1)
+        save(2) = Cube(5, 2, 2)
+        Cube(5, 2, 0) = Cube(2, 2, 0)
+        Cube(5, 2, 1) = Cube(2, 2, 1)
+        Cube(5, 2, 2) = Cube(2, 2, 2)
+        Cube(2, 2, 0) = Cube(0, 2, 0)
+        Cube(2, 2, 1) = Cube(0, 2, 1)
+        Cube(2, 2, 2) = Cube(0, 2, 2)
+        Cube(0, 2, 0) = Cube(4, 0, 2)
+        Cube(0, 2, 1) = Cube(4, 0, 1)
+        Cube(0, 2, 2) = Cube(4, 0, 0)
+        Cube(4, 0, 0) = save(2)
+        Cube(4, 0, 1) = save(1)
+        Cube(4, 0, 2) = save(0)
+
+        Return Cube
+    End Function
+
+    Function FN(Cube(,,))
+        Dim save(2) As String
+
+        'front face -90
+        save(0) = Cube(2, 0, 0)
+        save(1) = Cube(2, 1, 0)
+        save(2) = Cube(2, 2, 0)
+        Cube(2, 1, 0) = Cube(2, 2, 1)
+        Cube(2, 2, 0) = Cube(2, 2, 2)
+        Cube(2, 2, 1) = Cube(2, 1, 2)
+        Cube(2, 2, 2) = Cube(2, 0, 2)
+        Cube(2, 1, 2) = Cube(2, 0, 1)
+        Cube(2, 0, 0) = save(2)
+        Cube(2, 0, 1) = save(1)
+        Cube(2, 0, 2) = save(0)
+
+        'spin connecting parts -90 degrees
+        save(0) = Cube(3, 0, 0)
+        save(1) = Cube(3, 0, 1)
+        save(2) = Cube(3, 0, 2)
+        Cube(3, 0, 0) = Cube(5, 2, 0)
+        Cube(3, 0, 1) = Cube(5, 1, 0)
+        Cube(3, 0, 2) = Cube(5, 0, 0)
+        Cube(5, 0, 0) = Cube(1, 2, 0)
+        Cube(5, 1, 0) = Cube(1, 2, 1)
+        Cube(5, 2, 0) = Cube(1, 2, 2)
+        Cube(1, 2, 0) = Cube(0, 2, 2)
+        Cube(1, 2, 1) = Cube(0, 1, 2)
+        Cube(1, 2, 2) = Cube(0, 0, 2)
+        Cube(0, 0, 2) = save(0)
+        Cube(0, 1, 2) = save(1)
+        Cube(0, 2, 2) = save(2)
+
+        Return Cube
+    End Function
+
+    Function BN(Cube(,,))
+        Dim save(2) As String
+
+        'front face -90
+        save(0) = Cube(4, 0, 0)
+        save(1) = Cube(4, 1, 0)
+        save(2) = Cube(4, 2, 0)
+        Cube(4, 1, 0) = Cube(4, 2, 1)
+        Cube(4, 2, 0) = Cube(4, 2, 2)
+        Cube(4, 2, 1) = Cube(4, 1, 2)
+        Cube(4, 2, 2) = Cube(4, 0, 2)
+        Cube(4, 1, 2) = Cube(4, 0, 1)
+        Cube(4, 0, 0) = save(2)
+        Cube(4, 0, 1) = save(1)
+        Cube(4, 0, 2) = save(0)
+
+        'move furthest of connected to middle clockwise
+        save(0) = Cube(5, 0, 2)
+        save(1) = Cube(5, 1, 2)
+        save(2) = Cube(5, 2, 2)
+        Cube(5, 0, 2) = Cube(3, 2, 2)
+        Cube(5, 1, 2) = Cube(3, 2, 1)
+        Cube(5, 2, 2) = Cube(3, 2, 0)
+        Cube(3, 2, 0) = Cube(0, 0, 0)
+        Cube(3, 2, 1) = Cube(0, 1, 0)
+        Cube(3, 2, 2) = Cube(0, 2, 0)
+        Cube(0, 0, 0) = Cube(1, 0, 2)
+        Cube(0, 1, 0) = Cube(1, 0, 1)
+        Cube(0, 2, 0) = Cube(1, 0, 0)
+        Cube(1, 0, 0) = save(0)
+        Cube(1, 0, 1) = save(1)
+        Cube(1, 0, 2) = save(2)
+
+        Return Cube
+    End Function
+
+    'END OF MOVES ---------------------------
+
+    'ADDING MOVES TO ARRAY: -----------------
+
+    Sub AddUp(ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        ListOfMoves.Add("U")
+        MaxMoves += 1
+
+    End Sub
+
+    Sub AddDown(ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        ListOfMoves.Add("D")
+        MaxMoves += 1
+
+    End Sub
+
+    Sub AddLeft(ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        ListOfMoves.Add("L")
+        MaxMoves += 1
+
+    End Sub
+
+    Sub AddRight(ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        ListOfMoves.Add("R")
+        MaxMoves += 1
+
+    End Sub
+
+    Sub AddFront(ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        ListOfMoves.Add("F")
+        MaxMoves += 1
+
+    End Sub
+
+    Sub AddBack(ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        ListOfMoves.Add("B")
+        MaxMoves += 1
+
+    End Sub
+
+    Sub AddUpNot(ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        ListOfMoves.Add("UN")
+        MaxMoves += 1
+
+    End Sub
+
+    Sub AddDownNot(ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        ListOfMoves.Add("DN")
+        MaxMoves += 1
+
+    End Sub
+
+    Sub AddLeftNot(ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        ListOfMoves.Add("LN")
+        MaxMoves += 1
+
+    End Sub
+
+    Sub AddRightNot(ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        ListOfMoves.Add("RN")
+        MaxMoves += 1
+
+    End Sub
+
+    Sub AddFrontNot(ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        ListOfMoves.Add("FN")
+        MaxMoves += 1
+
+    End Sub
+
+    Sub AddBackNot(ListOfMoves As List(Of String), MaxMoves As Integer)
+
+        ListOfMoves.Add("BN")
+        MaxMoves += 1
+
+    End Sub
+
+    'END OF ADDING MOVES --------------------
+
+    Function NextFreeMove(Moves())
+        Dim space As Integer = 0
+
+        Do Until Moves(space) = ""
+            space = space + 1
+        Loop
+
+
+        Return space
+    End Function
+
+    Sub Clear()
+        Console.Clear()
+    End Sub
+
+    Sub wait()
+        Threading.Thread.Sleep(1)
+    End Sub
+
+    Sub BufferAndScreen()
+        Console.SetWindowSize(1, 1)
+        Console.SetBufferSize(40, 20)
+        Console.SetWindowSize(80, 40)
+    End Sub
+
+    Function intialiseCube()
+        Dim fullColours(5, 2, 2) As String
+
+        fullColours(0, 0, 0) = "G"
+        fullColours(0, 1, 0) = "G"
+        fullColours(0, 2, 0) = "G"
+        fullColours(0, 0, 1) = "G"
+        fullColours(0, 1, 1) = "G"
+        fullColours(0, 2, 1) = "G"
+        fullColours(0, 0, 2) = "G"
+        fullColours(0, 1, 2) = "G"
+        fullColours(0, 2, 2) = "G"
+        fullColours(1, 0, 0) = "R"
+        fullColours(1, 1, 0) = "R"
+        fullColours(1, 2, 0) = "R"
+        fullColours(1, 0, 1) = "R"
+        fullColours(1, 1, 1) = "R"
+        fullColours(1, 2, 1) = "R"
+        fullColours(1, 0, 2) = "R"
+        fullColours(1, 1, 2) = "R"
+        fullColours(1, 2, 2) = "R"
+        fullColours(2, 0, 0) = "W"
+        fullColours(2, 1, 0) = "W"
+        fullColours(2, 2, 0) = "W"
+        fullColours(2, 0, 1) = "W"
+        fullColours(2, 1, 1) = "W"
+        fullColours(2, 2, 1) = "W"
+        fullColours(2, 0, 2) = "W"
+        fullColours(2, 1, 2) = "W"
+        fullColours(2, 2, 2) = "W"
+        fullColours(3, 0, 0) = "M"
+        fullColours(3, 1, 0) = "M"
+        fullColours(3, 2, 0) = "M"
+        fullColours(3, 0, 1) = "M"
+        fullColours(3, 1, 1) = "M"
+        fullColours(3, 2, 1) = "M"
+        fullColours(3, 0, 2) = "M"
+        fullColours(3, 1, 2) = "M"
+        fullColours(3, 2, 2) = "M"
+        fullColours(4, 0, 0) = "Y"
+        fullColours(4, 1, 0) = "Y"
+        fullColours(4, 2, 0) = "Y"
+        fullColours(4, 0, 1) = "Y"
+        fullColours(4, 1, 1) = "Y"
+        fullColours(4, 2, 1) = "Y"
+        fullColours(4, 0, 2) = "Y"
+        fullColours(4, 1, 2) = "Y"
+        fullColours(4, 2, 2) = "Y"
+        fullColours(5, 0, 0) = "B"
+        fullColours(5, 1, 0) = "B"
+        fullColours(5, 2, 0) = "B"
+        fullColours(5, 0, 1) = "B"
+        fullColours(5, 1, 1) = "B"
+        fullColours(5, 2, 1) = "B"
+        fullColours(5, 0, 2) = "B"
+        fullColours(5, 1, 2) = "B"
+        fullColours(5, 2, 2) = "B"
+
+        Return fullColours
+    End Function
+
+    Function intialiseCursor()
+        Dim grid(5, 2, 2) As Boolean
+
+        For Fa = 0 To 5
+            For y = 0 To 2
+                For x = 0 To 2
+                    grid(Fa, x, y) = False
+                Next
+            Next
+        Next
+
+        grid(0, 0, 0) = True
+
+        Return grid
+    End Function
+
+    Sub colour(letter As String, overlapping As Boolean)
+
+        If overlapping = True Then
+            Console.ForegroundColor = ConsoleColor.Cyan
+        Else
+            If letter = "R" Then
+                Console.ForegroundColor = ConsoleColor.Red
+            ElseIf letter = "G" Then
+                Console.ForegroundColor = ConsoleColor.Green
+            ElseIf letter = "M" Then
+                Console.ForegroundColor = ConsoleColor.Magenta
+            ElseIf letter = "Y" Then
+                Console.ForegroundColor = ConsoleColor.Yellow
+            ElseIf letter = "B" Then
+                Console.ForegroundColor = ConsoleColor.Blue
+            ElseIf letter = "W" Then
+                Console.ForegroundColor = ConsoleColor.White
+            End If
+        End If
+
+    End Sub
+
+    Sub draw(Cube(,,) As String, Cursor(,,) As Boolean)
+        Dim face As Integer
+
+        face = 0
+        For y = 0 To 2
+            Console.Write("      ")
+            For x = 0 To 2
+                colour(Cube(face, x, y), Cursor(face, x, y))
+                Console.Write("██")
+            Next
+            Console.WriteLine()
+        Next
+
+        For y = 0 To 2
+            For Fa = 1 To 4
+                For x = 0 To 2
+                    colour(Cube(Fa, x, y), Cursor(Fa, x, y))
+                    Console.Write("██")
+                Next
+            Next
+            Console.WriteLine()
+        Next
+
+        face = 5
+        For y = 0 To 2
+            Console.Write("      ")
+            For x = 0 To 2
+                colour(Cube(face, x, y), Cursor(face, x, y))
+                Console.Write("██")
+            Next
+            Console.WriteLine()
+        Next
+
+    End Sub
+
+    Sub ButtonInstructions()
+        Console.ForegroundColor = ConsoleColor.White
+        Console.WriteLine("1-Red 2-Green 3-Magenta 4-Yellow 5-Blue 6-White B-SCRAMBLE P-DONE")
+        Console.WriteLine()
+    End Sub
+
+    Function keyCheck()
+        Dim key As String = ""
+
+        If Console.KeyAvailable Then
+            Console.WriteLine()
+            key = Console.ReadKey(True).KeyChar
+        End If
+
+        Return key
+    End Function
+
+    Function moveX(x, key)
+        If key = "a" Then
+            x = x - 1
+        ElseIf key = "d" Then
+            x = x + 1
+        End If
+
+        Return (x)
+    End Function
+
+    Function moveY(y, key)
+
+        If key = "w" Then
+            y = y - 1
+        ElseIf key = "s" Then
+            y = y + 1
+        End If
+
+        Return (y)
+    End Function
+
+    Function CursorPosition(key As String, LastPosition(,,) As Boolean)
+        Dim NextPosition(5, 2, 2) As Boolean
+        Dim face, posX, posY As Integer
+
+        For Fa = 0 To 5
+            For y = 0 To 2
+                For x = 0 To 2
+                    If LastPosition(Fa, x, y) = True Then
+                        face = Fa
+                        posX = x
+                        posY = y
+                    End If
+                Next
+            Next
+        Next
+
+        NextPosition = LastPosition
+        NextPosition(face, posX, posY) = False
+
+        Dim oldPX, oldPY As Integer
+
+        oldPX = posX
+        oldPY = posY
+
+        posX = moveX(posX, key)
+        posY = moveY(posY, key)
+        If posX = 1 And posY = 1 Then
+            If oldPX = 0 Then
+                posX = 2
+            ElseIf oldPX = 2 Then
+                posX = 0
+            ElseIf oldPY = 0 Then
+                posY = 2
+            ElseIf oldPY = 2 Then
+                posY = 0
+            End If
+        End If
+
+        If posX > -1 And posX < 3 And posY > -1 And posY < 3 Then
+            posX = posX
+            posY = posY
+        ElseIf posX = -1 Then
+            If face = 0 Or face = 5 Or face = 1 Then
+                posX = 0
+            Else
+                posX = 2
+                face = face - 1
+            End If
+        ElseIf posX = 3 Then
+            If face = 0 Or face = 5 Or face = 4 Then
+                posX = 2
+            Else
+                posX = 0
+                face = face + 1
+            End If
+        ElseIf posY = -1 Then
+            If face = 2 Then
+                face = 0
+                posY = 2
+            ElseIf face = 5 Then
+                face = 2
+                posY = 2
+            Else
+                posY = 0
+            End If
+        ElseIf posY = 3 Then
+            If face = 0 Then
+                face = 2
+                posY = 0
+            ElseIf face = 2 Then
+                face = 5
+                posY = 0
+            Else
+                posY = 2
+            End If
+        Else
+            Console.ForegroundColor = ConsoleColor.White
+            Console.WriteLine("BROKEN! - CRASH")
+            Console.ReadLine()
+        End If
+        NextPosition(face, posX, posY) = True
+
+        Return NextPosition
+    End Function
+
+    Function ColourChange(key As String, cube(,,) As String, cursor(,,) As Boolean)
+        Dim face, posX, posY As Integer
+
+        For Fa = 0 To 5
+            For y = 0 To 2
+                For x = 0 To 2
+                    If cursor(Fa, x, y) = True Then
+                        face = Fa
+                        posX = x
+                        posY = y
+                    End If
+                Next
+            Next
+        Next
+
+        If key = "1" Then
+            cube(face, posX, posY) = "R"
+        ElseIf key = "2" Then
+            cube(face, posX, posY) = "G"
+        ElseIf key = "3" Then
+            cube(face, posX, posY) = "M"
+        ElseIf key = "4" Then
+            cube(face, posX, posY) = "Y"
+        ElseIf key = "5" Then
+            cube(face, posX, posY) = "B"
+        ElseIf key = "6" Then
+            cube(face, posX, posY) = "W"
+        End If
+
+        Return cube
+    End Function
+
+    Function NumSquaresCheck(Cube(,,))
+        Dim NineEach As Boolean = False
+        Dim counter(5) As Integer
+
+        For Fa = 0 To 5
+            For y = 0 To 2
+                For x = 0 To 2
+                    If Cube(Fa, x, y) = "R" Then
+                        counter(0) = counter(0) + 1
+                    ElseIf Cube(Fa, x, y) = "G" Then
+                        counter(1) = counter(1) + 1
+                    ElseIf Cube(Fa, x, y) = "M" Then
+                        counter(2) = counter(2) + 1
+                    ElseIf Cube(Fa, x, y) = "B" Then
+                        counter(3) = counter(3) + 1
+                    ElseIf Cube(Fa, x, y) = "Y" Then
+                        counter(4) = counter(4) + 1
+                    ElseIf Cube(Fa, x, y) = "W" Then
+                        counter(5) = counter(5) + 1
+                    End If
+                Next
+            Next
+        Next
+
+        For i = 0 To 5
+            If counter(i) = 9 Then
+                'Console.ForegroundColor = ConsoleColor.White
+                'Console.WriteLine("You dont have nine of each colour.")
+            Else
+                NineEach = True
+            End If
+        Next
+
+        Return NineEach
+    End Function
+
+End Module
